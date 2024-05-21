@@ -24,7 +24,8 @@ while True:
     cv2.drawContours(contour_image, contours, -1, (0, 255, 0), 3)  # Draw green contours
 
     cv2.imshow("frame", frame)
-    cv2.imshow("Blue", blue_mask)
+    cv2.imshow("Blue mask", blue_mask)
+    cv2.imshow("Blue", blue)
     cv2.imshow("gray", gray)
     cv2.imshow("median", median)
     cv2.imshow("contour_image", contour_image)  # Show the image with contours drawn on it
