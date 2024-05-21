@@ -1,38 +1,46 @@
 import cv2
 import numpy as np
-
 import time
 import pigpio
 from gpiozero import Button, DistanceSensor
-
 import queue
 import threading
 
-# GPIO PINS
+# Define GPIO pins used for motor control and sensor inputs
 STEP_PIN = 21
 DIR_PIN = 20
-
 SWITCH_PIN = 16
 START_PIN = 23
 RESET_PIN = 24
-
 TRIG_PIN = 27
 ECHO_PIN = 17
 
-# NAV CONSTANTS
-SAFE_DIST = 150 # in mm
-TARGET_CLEARANCE_TIME = 150 # in mm
-X_OFFSET_CONV_FACTOR = 1
-DATUM_OFFSET = 100
-REQ_CONSEC = 5
+# Define constants for navigation and motor operation
+SAFE_DIST = 150  # Safe distance threshold in millimeters
+TARGET_CLEARANCE_TIME = 150  # Time to clear target in milliseconds
+X_OFFSET_CONV_FACTOR = 1  # Conversion factor for x offset
+DATUM_OFFSET = 100  # Steps to align with datum
+REQ_CONSEC = 5  # Required consecutive readings for alignment
 
-# SPECFICIATION
+# Specification for stopping time at the end of phase one
 PHASE_1_STOP_TIME = 7.5
+
+# Initialize a queue to store target offsets detected by the camera
+target_offset_queue = queue.Queue()
+
 
 # Create a queue to hold target offsets
 target_offset_queue = queue.Queue()
 
 def detector(fps_limit=30, width=640, height=480, debug=False):
+    """Capture video frames, detect blue objects, and compute their displacement from the center.
+    
+    Args:
+        fps_limit (int): Frame rate limit for video capture.
+        width (int): Width of the video frame.
+        height (int): Height of the video frame.
+        debug (bool): Flag to activate debugging mode which shows output frames.
+    """
     cap = cv2.VideoCapture(0)
     
     # Set the properties for resolution
@@ -103,17 +111,22 @@ def detector(fps_limit=30, width=640, height=480, debug=False):
         cv2.destroyAllWindows()
 
 def distance():
+    """Calculate and return the distance to the nearest object using ultrasonic sensor.
+
+    Returns:
+        float: Distance in centimeters.
+    """
     return ultrasonic.distance * 10
 
 def move_motor(start_frequency, final_frequency, steps, dir=1, run_time=None):
-    """Generate ramp waveforms from start to final frequency.
-    
-    Parameters:
-    - start_frequency: Starting frequency of the ramp.
-    - final_frequency: Ending frequency of the ramp.
-    - steps: Number of steps in the ramp.
-    - dir: Direction to move the motor (0 or 1).
-    - run_time: Time in seconds to run the motor at final frequency, None for indefinite run.
+    """Generate ramp waveforms to control motor speed from a starting to a final frequency.
+
+    Args:
+        start_frequency (int): Starting frequency of the ramp.
+        final_frequency (int): Ending frequency of the ramp.
+        steps (int): Number of steps in the ramp.
+        dir (int): Direction to move the motor (0 or 1).
+        run_time (float, optional): Time in seconds to run the motor at final frequency.
     """
     if not pi.connected:
         print("Error connecting to pigpio daemon. Is the daemon running?")
@@ -169,6 +182,7 @@ def stop_motor():
     last_wave_ids = None
 
 def align():
+    """Adjust the motor to align the system based on the detected target offsets."""
     consecutive_aligned = 0
     while consecutive_aligned < REQ_CONSEC:
         if not target_offset_queue.empty():
@@ -203,6 +217,7 @@ def align():
     pi.write(STEP_PIN, 0)
 
 def cycle():
+    """Control the full operational cycle of the system, including movement and alignment."""
     global wave_ids
 
     # Start moving forward
@@ -253,6 +268,7 @@ def cycle():
     print("Cycle complete: Aligned with the target.")
 
 def menu():
+    """Provide an interactive menu to control the start and reset of the operation cycle."""
     while True:
         # Wait for the start button to be pressed
         start.wait_for_press()
@@ -277,16 +293,16 @@ def menu():
         # Optionally add a small delay
         time.sleep(0.1)  # Helps with debouncing and CPU load
 
+# Initialize pigpio library instance and configure GPIO modes
 pi = pigpio.pi()
 if not pi.connected:
     print("Error connecting to pigpio daemon. Is the daemon running?")
-
 pi.set_mode(STEP_PIN, pigpio.OUTPUT)
 pi.wave_clear()
 
+# Initialize sensors and input devices
 ultrasonic = DistanceSensor(echo=ECHO_PIN, trigger=TRIG_PIN)
 limit_switch = Button(SWITCH_PIN)
-
 start = Button(START_PIN)
 reset = Button(RESET_PIN)
 
