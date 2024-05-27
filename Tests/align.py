@@ -13,7 +13,7 @@ DIR_PIN = 20
 # Define constants for navigation and motor operation
 SAFE_DIST = 150  # Safe distance threshold in millimeters
 TARGET_CLEARANCE_TIME = 150  # Time to clear target in milliseconds
-X_OFFSET_CONV_FACTOR = 1  # Conversion factor for x offset
+X_OFFSET_CONV_FACTOR = 0.6  # Conversion factor for x offset
 DATUM_OFFSET = 100  # Steps to align with datum
 REQ_CONSEC = 5  # Required consecutive readings for alignment
 
@@ -72,7 +72,7 @@ def detector(fps_limit=30, width=640, height=480, debug=False):
             # Calculate x displacement from the center of the frame
             center_frame_x = width // 2
             displacement_x = cX - center_frame_x
-            target_offset_queue.put(displacement_x)
+            target_offset_queue.put(-displacement_x)
 
             if debug:
                 # Display the displacement on the frame
@@ -107,8 +107,9 @@ def align():
     while consecutive_aligned < REQ_CONSEC:
         if not target_offset_queue.empty():
             offset = target_offset_queue.get()
+            print(offset)
             # Calculate the step delay and direction based on offset
-            if offset == 0:
+            if offset > -5 and offset < 5:
                 consecutive_aligned += 1  # Increment if aligned
                 continue
             else:
@@ -124,10 +125,11 @@ def align():
             # Create a simple waveform for these steps
             for _ in range(steps):
                 pi.gpio_trigger(STEP_PIN, 10, 1)  # Trigger pulse for step
-                time.sleep(0.001)  # Small delay between steps to control speed
+                time.sleep(0.01)  # Small delay between steps to control speed
 
     # Stop the motor once aligned
     pi.write(STEP_PIN, 0)  # Ensuring no more steps are triggered
+    print("camera aligned with target")
 
     # Align with datum
     for _ in range(DATUM_OFFSET):
@@ -135,6 +137,7 @@ def align():
         time.sleep(0.001)
     
     pi.write(STEP_PIN, 0)
+    print("aligned")
 
 
 # Initialize pigpio library instance and configure GPIO modes
