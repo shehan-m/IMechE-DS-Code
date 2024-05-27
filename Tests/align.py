@@ -116,7 +116,7 @@ def align():
                 consecutive_aligned = 0  # Reset if not aligned
 
             # Determine direction based on the sign of the offset
-            direction = 1 if offset > 0 else 0
+            direction = 1 if -offset > 0 else 0
             pi.write(DIR_PIN, direction)
 
             # Calculate number of steps (proportional to the offset)
