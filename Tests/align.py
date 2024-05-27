@@ -9,11 +9,6 @@ import threading
 # Define GPIO pins used for motor control and sensor inputs
 STEP_PIN = 21
 DIR_PIN = 20
-SWITCH_PIN = 16
-START_PIN = 23
-RESET_PIN = 24
-TRIG_PIN = 27
-ECHO_PIN = 17
 
 # Define constants for navigation and motor operation
 SAFE_DIST = 150  # Safe distance threshold in millimeters
@@ -149,23 +144,11 @@ if not pi.connected:
 pi.set_mode(STEP_PIN, pigpio.OUTPUT)
 pi.wave_clear()
 
-# Initialize sensors and input devices
-ultrasonic = DistanceSensor(echo=ECHO_PIN, trigger=TRIG_PIN)
-limit_switch = Button(SWITCH_PIN)
-start = Button(START_PIN)
-reset = Button(RESET_PIN)
-
 wave_ids = []  # Keep track of created wave IDs globally or in shared context
-
-#limit_switch.isPressed()
-#print("The button was pressed!")
 
 try:
     detector_thread = threading.Thread(target=detector)
     detector_thread.start()
-    
-    #menu_thread = threading.Thread(target=menu)
-    #menu_thread.start()
     
     align_thread = threading.Thread(target=align)
     align_thread.start()

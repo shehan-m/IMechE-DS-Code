@@ -16,11 +16,10 @@ TRIG_PIN = 27
 ECHO_PIN = 17
 
 # Define constants for navigation and motor operation
-SAFE_DIST = 150  # Safe distance threshold in millimeters
-TARGET_CLEARANCE_TIME = 150  # Time to clear target in milliseconds
+SAFE_DIST = 150  # Safe distance threshold from wall in millimeters
+REQ_CONSEC = 5  # Required consecutive readings for alignment
 X_OFFSET_CONV_FACTOR = 1  # Conversion factor for x offset
 DATUM_OFFSET = 100  # Steps to align with datum
-REQ_CONSEC = 5  # Required consecutive readings for alignment
 
 # Specification for stopping time at the end of phase one
 PHASE_1_STOP_TIME = 7.5
@@ -226,7 +225,7 @@ def cycle():
         
         if current_distance <= SAFE_DIST:
             # Slow down as it gets close to the barrier
-            move_motor(start_frequency=1000, final_frequency=400, steps=100, dir=1, run_time=None)
+            move_motor(start_frequency=1000, final_frequency=300, steps=100, dir=1, run_time=None)
             end_time = time.time()
 
         if limit_switch.is_pressed:
@@ -237,7 +236,12 @@ def cycle():
         time.sleep(0.1)  # Short delay to reduce sensor noise and CPU load
 
     # Return to the origin (for simplicity, assume this is reverse of travel_distance)
-    move_motor(start_frequency=100, final_frequency=1000, steps=50, dir=0, run_time=(end_time - start_time) + 20)
+    move_motor(start_frequency=100, final_frequency=1000, steps=50, dir=0, run_time=(end_time - start_time))
+    
+    while True:
+        if not target_offset_queue.empty():
+            move_motor(start_frequency=1000, final_frequency=300, steps=100, dir=0, run_time=None)
+            break
 
     # Align with the origin / target
     align()
@@ -303,9 +307,6 @@ start = Button(START_PIN)
 reset = Button(RESET_PIN)
 
 wave_ids = []  # Keep track of created wave IDs globally or in shared context
-
-#limit_switch.isPressed()
-#print("The button was pressed!")
 
 try:
     detector_thread = threading.Thread(target=detector)
