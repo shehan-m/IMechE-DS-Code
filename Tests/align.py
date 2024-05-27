@@ -13,8 +13,8 @@ DIR_PIN = 20
 # Define constants for navigation and motor operation
 SAFE_DIST = 150  # Safe distance threshold in millimeters
 TARGET_CLEARANCE_TIME = 150  # Time to clear target in milliseconds
-X_OFFSET_CONV_FACTOR = 0.6  # Conversion factor for x offset
-DATUM_OFFSET = 100  # Steps to align with datum
+X_OFFSET_CONV_FACTOR = 0.2  # Conversion factor for x offset
+DATUM_OFFSET = 1000  # Steps to align with datum
 REQ_CONSEC = 5  # Required consecutive readings for alignment
 
 # Specification for stopping time at the end of phase one
@@ -126,15 +126,20 @@ def align():
             for _ in range(steps):
                 pi.gpio_trigger(STEP_PIN, 10, 1)  # Trigger pulse for step
                 time.sleep(0.01)  # Small delay between steps to control speed
+            
+            time.sleep(0.4)
 
     # Stop the motor once aligned
     pi.write(STEP_PIN, 0)  # Ensuring no more steps are triggered
     print("camera aligned with target")
+    time.sleep(7.5)
+
+    pi.write(DIR_PIN, 0)
 
     # Align with datum
     for _ in range(DATUM_OFFSET):
         pi.gpio_trigger(STEP_PIN, 10, 1)
-        time.sleep(0.001)
+        time.sleep(0.01)
     
     pi.write(STEP_PIN, 0)
     print("aligned")
