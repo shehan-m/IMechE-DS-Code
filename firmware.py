@@ -28,10 +28,6 @@ PHASE_1_STOP_TIME = 7.5
 # Initialize a queue to store target offsets detected by the camera
 target_offset_queue = queue.Queue()
 
-
-# Create a queue to hold target offsets
-target_offset_queue = queue.Queue()
-
 def detector(fps_limit=30, width=640, height=480, debug=False):
     """Capture video frames, detect blue objects, and compute their displacement from the center.
     
