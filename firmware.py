@@ -20,7 +20,7 @@ SAFE_DIST = 150  # Safe distance threshold from wall in millimeters
 REQ_CONSEC = 5  # Required consecutive readings for alignment
 X_OFFSET_CONV_FACTOR = 0.15  # Conversion factor for x offset
 DATUM_OFFSET = 2100  # Steps to align with datum
-CAMERA_ORGIN_OFFSET = -40
+CAMERA_ORGIN_OFFSET = -70
 
 # Specification for stopping time at the end of phase one
 PHASE_1_STOP_TIME = 7.5
@@ -75,7 +75,7 @@ def detector(fps_limit=30, width=640, height=480, debug=False):
                 cX, cY = 0, 0
 
             # Calculate x displacement from the center of the frame
-            center_frame_x = width // 2
+            center_frame_x = width // 2 + CAMERA_ORGIN_OFFSET
             displacement_x = cX - center_frame_x
             target_offset_queue.put(displacement_x)
 
@@ -112,7 +112,7 @@ def distance():
     Returns:
         float: Distance in centimeters.
     """
-    return ultrasonic.distance * 10
+    return ultrasonic.distance * 1000
 
 def move_motor(start_frequency, final_frequency, steps, dir=1, run_time=None):
     """Generate ramp waveforms to control motor speed from a starting to a final frequency.
@@ -206,7 +206,7 @@ def align():
     print("camera aligned with target")
 
     # Align with datum
-    move_motor(10, 200, 100, 0, DATUM_OFFSET/200)
+    move_motor(10, 200, 100, 0, DATUM_OFFSET / 200)
     
     pi.write(STEP_PIN, 0)
     print("aligned")
@@ -216,7 +216,7 @@ def cycle():
     global wave_ids
 
     # Start moving forward
-    move_motor(start_frequency=10, final_frequency=1000, steps=100, dir=1, run_time=None)
+    move_motor(start_frequency=10, final_frequency=1000, steps=100, dir=0, run_time=None)
     start_time = time.time()
 
     # Continuously check distance
@@ -225,7 +225,7 @@ def cycle():
         
         if current_distance <= SAFE_DIST:
             # Slow down as it gets close to the barrier
-            move_motor(start_frequency=1000, final_frequency=300, steps=100, dir=1, run_time=None)
+            move_motor(start_frequency=1000, final_frequency=300, steps=100, dir=0, run_time=None)
             end_time = time.time()
 
         if limit_switch.is_pressed:
@@ -236,7 +236,7 @@ def cycle():
         time.sleep(0.1)  # Short delay to reduce sensor noise and CPU load
 
     # Return to the origin (for simplicity, assume this is reverse of travel_distance)
-    move_motor(start_frequency=100, final_frequency=1000, steps=50, dir=0, run_time=(end_time - start_time))
+    move_motor(start_frequency=100, final_frequency=1000, steps=50, dir=1, run_time=(end_time - start_time))
     
     while True:
         if not target_offset_queue.empty():
@@ -250,14 +250,14 @@ def cycle():
     time.sleep(PHASE_1_STOP_TIME)
 
     # Move forward to find the next target and align with it
-    move_motor(start_frequency=100, final_frequency=1000, steps=100, dir=1, run_time=None)
+    move_motor(start_frequency=100, final_frequency=1000, steps=100, dir=0, run_time=None)
 
     # Time to clear the origin / first target
     time.sleep(10)  # Move forward for 10 seconds or until target is found
 
     while True:
         if not target_offset_queue.empty():
-            move_motor(start_frequency=1000, final_frequency=300, steps=100, dir=1, run_time=None)
+            move_motor(start_frequency=1000, final_frequency=300, steps=100, dir=0, run_time=None)
             break
     
     # Align with the target
