@@ -13,9 +13,10 @@ DIR_PIN = 20
 # Define constants for navigation and motor operation
 SAFE_DIST = 150  # Safe distance threshold in millimeters
 TARGET_CLEARANCE_TIME = 150  # Time to clear target in milliseconds
-X_OFFSET_CONV_FACTOR = 0.2  # Conversion factor for x offset
-DATUM_OFFSET = 1000  # Steps to align with datum
-REQ_CONSEC = 5  # Required consecutive readings for alignment
+X_OFFSET_CONV_FACTOR = 0.15  # Conversion factor for x offset
+DATUM_OFFSET = 2100  # Steps to align with datum
+REQ_CONSEC = 5 # Required consecutive readings for alignment
+CAMERA_ORGIN_OFFSET = -40
 
 # Specification for stopping time at the end of phase one
 PHASE_1_STOP_TIME = 7.5
@@ -32,7 +33,7 @@ def detector(fps_limit=30, width=640, height=480, debug=False):
         height (int): Height of the video frame.
         debug (bool): Flag to activate debugging mode which shows output frames.
     """
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(-1)
     
     # Set the properties for resolution
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
@@ -167,39 +168,33 @@ def stop_motor():
 def align():
     """Adjust the motor to align the system based on the detected target offsets."""
     consecutive_aligned = 0
-    move_motor(10, 200, 100, 1)
     while consecutive_aligned < REQ_CONSEC:
         if not target_offset_queue.empty():
             offset = target_offset_queue.get()
-            print(offset)
+            #print(offset)
             # Calculate the step delay and direction based on offset
-            if offset > -5 and offset < 5:
+            if offset > -20 and offset < 20:
                 consecutive_aligned += 1  # Increment if aligned
-                print("Consec: " + consecutive_aligned)
                 continue
             else:
                 consecutive_aligned = 0  # Reset if not aligned
 
             # Determine direction based on the sign of the offset
             direction = 1 if offset > 0 else 0
-            pi.write(DIR_PIN, direction)
 
             # Calculate number of steps (proportional to the offset)
             steps = int(abs(offset) * X_OFFSET_CONV_FACTOR)
 
-            move_motor(200, 200, 100, direction, steps/200)
-            
-            #time.sleep(0.4)
+            move_motor(200, 200, 100, direction, steps / 200)
+
+            time.sleep( steps / 200)
 
     # Stop the motor once aligned
     pi.write(STEP_PIN, 0)  # Ensuring no more steps are triggered
     print("camera aligned with target")
-    time.sleep(7.5)
-
-    pi.write(DIR_PIN, 0)
 
     # Align with datum
-    move_motor(10, 200, 100, direction, DATUM_OFFSET/200)
+    move_motor(10, 200, 100, 0, DATUM_OFFSET/200)
     
     pi.write(STEP_PIN, 0)
     print("aligned")

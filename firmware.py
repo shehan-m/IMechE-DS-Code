@@ -18,8 +18,9 @@ ECHO_PIN = 17
 # Define constants for navigation and motor operation
 SAFE_DIST = 150  # Safe distance threshold from wall in millimeters
 REQ_CONSEC = 5  # Required consecutive readings for alignment
-X_OFFSET_CONV_FACTOR = 0.2  # Conversion factor for x offset
-DATUM_OFFSET = 2250  # Steps to align with datum
+X_OFFSET_CONV_FACTOR = 0.15  # Conversion factor for x offset
+DATUM_OFFSET = 2100  # Steps to align with datum
+CAMERA_ORGIN_OFFSET = -40
 
 # Specification for stopping time at the end of phase one
 PHASE_1_STOP_TIME = 7.5
@@ -182,34 +183,30 @@ def align():
     while consecutive_aligned < REQ_CONSEC:
         if not target_offset_queue.empty():
             offset = target_offset_queue.get()
-            print(offset)
+            #print(offset)
             # Calculate the step delay and direction based on offset
-            if offset > -5 and offset < 5:
+            if offset > -20 and offset < 20:
                 consecutive_aligned += 1  # Increment if aligned
                 continue
             else:
                 consecutive_aligned = 0  # Reset if not aligned
 
             # Determine direction based on the sign of the offset
-            direction = 1 if -offset > 0 else 0
-            pi.write(DIR_PIN, direction)
+            direction = 1 if offset > 0 else 0
 
             # Calculate number of steps (proportional to the offset)
             steps = int(abs(offset) * X_OFFSET_CONV_FACTOR)
 
-            move_motor(10, 200, 100, direction, steps / 200)
-            
-            time.sleep(0.4)
+            move_motor(200, 200, 100, direction, steps / 200)
+
+            time.sleep( steps / 200)
 
     # Stop the motor once aligned
     pi.write(STEP_PIN, 0)  # Ensuring no more steps are triggered
     print("camera aligned with target")
-    time.sleep(7.5)
-
-    pi.write(DIR_PIN, 0)
 
     # Align with datum
-    move_motor(10, 200, 100, direction, DATUM_OFFSET/200)
+    move_motor(10, 200, 100, 0, DATUM_OFFSET/200)
     
     pi.write(STEP_PIN, 0)
     print("aligned")
