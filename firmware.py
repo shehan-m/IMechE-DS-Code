@@ -18,7 +18,7 @@ ECHO_PIN = 17
 # Define constants for navigation and motor operation
 SAFE_DIST = 300  # Safe distance threshold from wall in millimeters
 REQ_CONSEC = 5  # Required consecutive readings for alignment
-X_OFFSET_CONV_FACTOR = 0.17  # Conversion factor for x offset
+X_OFFSET_CONV_FACTOR = 0.15  # Conversion factor for x offset
 DATUM_OFFSET = 1600  # Steps to align with datum
 CAMERA_ORGIN_OFFSET = 0
 
@@ -28,7 +28,7 @@ PHASE_1_STOP_TIME = 7.5
 # Initialize a queue to store target offsets detected by the camera
 target_offset_queue = queue.Queue()
 
-def detector(fps_limit=30, width=640, height=480, debug=False):
+def detector(fps_limit=15, width=640, height=480, debug=False):
     """Capture video frames, detect blue objects, and compute their displacement from the center.
     
     Args:
