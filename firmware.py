@@ -19,7 +19,7 @@ ECHO_PIN = 17
 SAFE_DIST = 300  # Safe distance threshold from wall in millimeters
 REQ_CONSEC = 5  # Required consecutive readings for alignment
 X_OFFSET_CONV_FACTOR = 0.17  # Conversion factor for x offset
-DATUM_OFFSET = 2100  # Steps to align with datum
+DATUM_OFFSET = 1600  # Steps to align with datum
 CAMERA_ORGIN_OFFSET = 0
 
 # Specification for stopping time at the end of phase one
@@ -184,8 +184,12 @@ def align():
         if not target_offset_queue.empty():
             offset = target_offset_queue.get()
             #print(offset)
+
+            # Calculate number of steps (proportional to the offset)
+            steps = int(abs(offset) * X_OFFSET_CONV_FACTOR)
+
             # Calculate the step delay and direction based on offset
-            if (offset > -20 and offset < 20) or steps < 10:
+            if (offset > -20 and offset < 20) or steps < 1:
                 consecutive_aligned += 1  # Increment if aligned
                 continue
             else:
@@ -193,9 +197,6 @@ def align():
 
             # Determine direction based on the sign of the offset
             direction = 1 if offset > 0 else 0
-
-            # Calculate number of steps (proportional to the offset)
-            steps = int(abs(offset) * X_OFFSET_CONV_FACTOR)
 
             move_motor(200, 200, 100, direction, steps / 200)
 
