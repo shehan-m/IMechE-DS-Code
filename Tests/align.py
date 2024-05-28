@@ -171,9 +171,13 @@ def align():
     while consecutive_aligned < REQ_CONSEC:
         if not target_offset_queue.empty():
             offset = target_offset_queue.get()
+
+            # Calculate number of steps (proportional to the offset)
+            steps = int(abs(offset) * X_OFFSET_CONV_FACTOR)
+
             #print(offset)
             # Calculate the step delay and direction based on offset
-            if offset > -20 and offset < 20:
+            if (offset > -20 and offset < 20) or steps < 10:
                 consecutive_aligned += 1  # Increment if aligned
                 continue
             else:
@@ -181,9 +185,6 @@ def align():
 
             # Determine direction based on the sign of the offset
             direction = 1 if offset > 0 else 0
-
-            # Calculate number of steps (proportional to the offset)
-            steps = int(abs(offset) * X_OFFSET_CONV_FACTOR)
 
             move_motor(200, 200, 100, direction, steps / 200)
 

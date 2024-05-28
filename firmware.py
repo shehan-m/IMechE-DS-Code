@@ -185,7 +185,7 @@ def align():
             offset = target_offset_queue.get()
             #print(offset)
             # Calculate the step delay and direction based on offset
-            if offset > -20 and offset < 20:
+            if (offset > -20 and offset < 20) or steps < 10:
                 consecutive_aligned += 1  # Increment if aligned
                 continue
             else:
