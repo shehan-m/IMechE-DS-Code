@@ -37,7 +37,7 @@ def detector(fps_limit=30, width=640, height=480, debug=False):
         height (int): Height of the video frame.
         debug (bool): Flag to activate debugging mode which shows output frames.
     """
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(-1)
     
     # Set the properties for resolution
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
