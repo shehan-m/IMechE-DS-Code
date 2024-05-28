@@ -18,9 +18,9 @@ ECHO_PIN = 17
 # Define constants for navigation and motor operation
 SAFE_DIST = 150  # Safe distance threshold from wall in millimeters
 REQ_CONSEC = 5  # Required consecutive readings for alignment
-X_OFFSET_CONV_FACTOR = 0.15  # Conversion factor for x offset
+X_OFFSET_CONV_FACTOR = 0.17  # Conversion factor for x offset
 DATUM_OFFSET = 2100  # Steps to align with datum
-CAMERA_ORGIN_OFFSET = -70
+CAMERA_ORGIN_OFFSET = 70
 
 # Specification for stopping time at the end of phase one
 PHASE_1_STOP_TIME = 7.5
@@ -28,7 +28,7 @@ PHASE_1_STOP_TIME = 7.5
 # Initialize a queue to store target offsets detected by the camera
 target_offset_queue = queue.Queue()
 
-def detector(fps_limit=30, width=640, height=480, debug=False):
+def detector(fps_limit=15, width=640, height=480, debug=False):
     """Capture video frames, detect blue objects, and compute their displacement from the center.
     
     Args:
@@ -77,7 +77,7 @@ def detector(fps_limit=30, width=640, height=480, debug=False):
             # Calculate x displacement from the center of the frame
             center_frame_x = width // 2 + CAMERA_ORGIN_OFFSET
             displacement_x = cX - center_frame_x
-            target_offset_queue.put(displacement_x)
+            target_offset_queue.put(-displacement_x)
 
             if debug:
                 # Display the displacement on the frame
@@ -222,6 +222,7 @@ def cycle():
     # Continuously check distance
     while True:
         current_distance = distance()  # Measure distance from barrier
+        print(f"Distance: {current_distance:.1f} mm")
         
         if current_distance <= SAFE_DIST:
             # Slow down as it gets close to the barrier
