@@ -167,6 +167,7 @@ def stop_motor():
 def align():
     """Adjust the motor to align the system based on the detected target offsets."""
     consecutive_aligned = 0
+    move_motor(10, 200, 100, 1)
     while consecutive_aligned < REQ_CONSEC:
         if not target_offset_queue.empty():
             offset = target_offset_queue.get()
@@ -174,20 +175,21 @@ def align():
             # Calculate the step delay and direction based on offset
             if offset > -5 and offset < 5:
                 consecutive_aligned += 1  # Increment if aligned
+                print("Consec: " + consecutive_aligned)
                 continue
             else:
                 consecutive_aligned = 0  # Reset if not aligned
 
             # Determine direction based on the sign of the offset
-            direction = 1 if -offset > 0 else 0
+            direction = 1 if offset > 0 else 0
             pi.write(DIR_PIN, direction)
 
             # Calculate number of steps (proportional to the offset)
             steps = int(abs(offset) * X_OFFSET_CONV_FACTOR)
 
-            move_motor(10, 200, 100, direction, steps/200)
+            move_motor(200, 200, 100, direction, steps/200)
             
-            time.sleep(0.4)
+            #time.sleep(0.4)
 
     # Stop the motor once aligned
     pi.write(STEP_PIN, 0)  # Ensuring no more steps are triggered
