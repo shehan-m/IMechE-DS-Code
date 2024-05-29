@@ -92,7 +92,7 @@ def detector(fps_limit=15, width=640, height=480, debug=False):
         else:
             # Clear the queue if no contours are found
             while not target_offset_queue.empty():
-                target_offset_queue.get()
+                target_offset_queue.queue.clear()
 
         if debug:
             cv2.imshow("Blue", median)
@@ -183,7 +183,7 @@ def align():
     while consecutive_aligned < REQ_CONSEC:
         if not target_offset_queue.empty():
             offset = target_offset_queue.get()
-            #print(offset)
+            print(offset)
 
             # Calculate number of steps (proportional to the offset)
             steps = int(abs(offset) * X_OFFSET_CONV_FACTOR)
@@ -230,6 +230,9 @@ def cycle():
             # Slow down as it gets close to the barrier
             move_motor(start_frequency=1000, final_frequency=300, steps=100, dir=0, run_time=None)
             end_time = time.time()
+        
+        if end_time == None:
+            end_time = time.time()
 
         if limit_switch.is_pressed:
             # Stop the motor when the switch is pressed
@@ -249,6 +252,7 @@ def cycle():
     print("found target")
 
     # Align with the origin / target
+    print("aligning")
     align()
     print("aligned")
 
