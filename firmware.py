@@ -19,7 +19,7 @@ ECHO_PIN = 17
 SAFE_DIST = 300  # Safe distance threshold from wall in millimeters
 REQ_CONSEC = 5  # Required consecutive readings for alignment
 X_OFFSET_CONV_FACTOR = 0.15  # Conversion factor for x offset
-DATUM_OFFSET = 2100  # Steps to align with datum
+DATUM_OFFSET = 1900  # Steps to align with datum
 CAMERA_ORGIN_OFFSET = -40
 
 # Specification for stopping time at the end of phase one
@@ -229,6 +229,7 @@ def cycle():
 
     # Return to the origin (for simplicity, assume this is reverse of travel_distance)
     move_motor(start_frequency=100, final_frequency=1000, steps=50, dir=1, run_time=(end_time - start_time))
+    move_motor(start_frequency=500, final_frequency=300, steps=100, dir=1, run_time=None)
     print("moving back")
     
     while True:
