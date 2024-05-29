@@ -244,7 +244,6 @@ def cycle():
 
         time.sleep(0.1) # Short delay to reduce sensor noise and CPU load
 
-
     # Return to the origin (for simplicity, assume this is reverse of travel_distance)
     move_motor(start_frequency=100, final_frequency=1000, steps=50, dir=1, run_time=(end_time - start_time))
     print("moving back")
@@ -290,19 +289,7 @@ def menu():
 
         time.sleep(3)
 
-        # Start the cycle function in a new thread
-        cycle_thread = threading.Thread(target=cycle)
-        cycle_thread.start()
-
-        # Monitor for the reset button to be pressed
-        while cycle_thread.is_alive():
-            if reset.is_pressed:
-                print("Reset pressed, stopping the cycle and resetting.")
-                stop_motor()  # Ensure motor stops immediately
-                cycle_thread.join()  # Wait for the cycle thread to finish
-                break  # Exit the loop to reset the menu
-            
-        cycle_thread.join()  # Ensure the cycle thread has fully finished before looping back
+        cycle()
 
         # Optionally add a small delay
         time.sleep(0.1)  # Helps with debouncing and CPU load
