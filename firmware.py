@@ -164,11 +164,12 @@ def stop_motor():
 
 def align():
     """Adjust the motor to align the system based on the detected target offsets."""
+    start=time.time()
     consecutive_aligned = 0
     while consecutive_aligned < REQ_CONSEC:
         if not target_offset_queue.empty():
             offset = target_offset_queue.get()
-            print(offset)
+            #print(offset)
 
             # Calculate number of steps (proportional to the offset)
             steps = int(abs(offset) * X_OFFSET_CONV_FACTOR)
@@ -180,22 +181,15 @@ def align():
             else:
                 consecutive_aligned = 0  # Reset if not aligned
 
+            if (time.time()-start >= 10):
+                break
+
             # Determine direction based on the sign of the offset
             direction = 1 if offset > 0 else 0
 
             move_motor(200, 200, 100, direction, steps / 200)
 
             time.sleep( steps / 200)
-
-    # Stop the motor once aligned
-    pi.write(STEP_PIN, 0)  # Ensuring no more steps are triggered
-    print("camera aligned with target")
-
-    # Align with datum
-    move_motor(10, 200, 100, 0, DATUM_OFFSET/200)
-    
-    pi.write(STEP_PIN, 0)
-    print("aligned")
 
 
 def cycle():
@@ -240,7 +234,17 @@ def cycle():
 
     # Align with the origin / target
     print("aligning")
+
     align()
+    
+    # Stop the motor once aligned
+    pi.write(STEP_PIN, 0)  # Ensuring no more steps are triggered
+    print("camera aligned with target")
+
+    # Align with datum
+    move_motor(10, 200, 100, 0, DATUM_OFFSET/200)
+    
+    pi.write(STEP_PIN, 0)
     print("aligned")
 
     # Wait for the specified stop time
@@ -258,7 +262,19 @@ def cycle():
             break
     
     # Align with the target
+    print("aligning")
+
     align()
+    
+    # Stop the motor once aligned
+    pi.write(STEP_PIN, 0)  # Ensuring no more steps are triggered
+    print("camera aligned with target")
+
+    # Align with datum
+    move_motor(10, 200, 100, 0, DATUM_OFFSET/200)
+    
+    pi.write(STEP_PIN, 0)
+    print("aligned")
 
     # Finally, stop the motor
     print("Cycle complete: Aligned with the target.")
