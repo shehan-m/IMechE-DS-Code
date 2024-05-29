@@ -20,7 +20,7 @@ SAFE_DIST = 300  # Safe distance threshold from wall in millimeters
 REQ_CONSEC = 5  # Required consecutive readings for alignment
 X_OFFSET_CONV_FACTOR = 0.15  # Conversion factor for x offset
 DATUM_OFFSET = 2100  # Steps to align with datum
-CAMERA_ORGIN_OFFSET = 0
+CAMERA_ORGIN_OFFSET = -40
 
 # Specification for stopping time at the end of phase one
 PHASE_1_STOP_TIME = 7.5
@@ -37,20 +37,19 @@ def detector(fps_limit=15, width=640, height=480, debug=False):
         height (int): Height of the video frame.
         debug (bool): Flag to activate debugging mode which shows output frames.
     """
-    cap = cv2.VideoCapture(-1)
-    
-    # Set the properties for resolution
+    cap = cv2.VideoCapture(0)
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
-    
-    # Set the frame rate limit
     cap.set(cv2.CAP_PROP_FPS, fps_limit)
+
+    # Calculate 10% of the frame's area
+    min_area = 0.05 * width * height
 
     while True:
         _, frame = cap.read()
         hsv_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
-        # Blue color
+        # Define blue color range
         low_blue = np.array([94, 80, 2])
         high_blue = np.array([126, 255, 255])
         blue_mask = cv2.inRange(hsv_frame, low_blue, high_blue)
@@ -62,37 +61,27 @@ def detector(fps_limit=15, width=640, height=480, debug=False):
         gray = cv2.cvtColor(median, cv2.COLOR_BGR2GRAY)
         contours, _ = cv2.findContours(gray, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
-        if contours:
-            # Find the largest contour
-            largest_contour = max(contours, key=cv2.contourArea)
+        for contour in contours:
+            if cv2.contourArea(contour) >= min_area:
+                # Process the contour if it's large enough
+                M = cv2.moments(contour)
+                if M["m00"] != 0:
+                    cX = int(M["m10"] / M["m00"])
+                    cY = int(M["m01"] / M["m00"])
+                else:
+                    cX, cY = 0, 0
 
-            # Get the moments to calculate the center of the contour
-            M = cv2.moments(largest_contour)
-            if M["m00"] != 0:
-                cX = int(M["m10"] / M["m00"])
-                cY = int(M["m01"] / M["m00"])
-            else:
-                cX, cY = 0, 0
+                center_frame_x = width // 2
+                displacement_x = cX - center_frame_x
+                target_offset_queue.put(-displacement_x)
 
-            # Calculate x displacement from the center of the frame
-            center_frame_x = width // 2
-            displacement_x = cX - center_frame_x
-            target_offset_queue.put(-displacement_x)
-
-            if debug:
-                # Display the displacement on the frame
-                cv2.putText(frame, f"Displacement: {displacement_x}px", (50, 50),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
-
-                # Draw the largest contour and its center
-                cv2.drawContours(frame, [largest_contour], -1, (0, 255, 0), 3)
-                cv2.circle(frame, (cX, cY), 7, (255, 255, 255), -1)
-                cv2.putText(frame, "center", (cX - 20, cY - 20),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
-        else:
-            # Clear the queue if no contours are found
-            while not target_offset_queue.empty():
-                target_offset_queue.get()
+                if debug:
+                    cv2.putText(frame, f"Displacement: {displacement_x}px", (50, 50),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+                    cv2.drawContours(frame, [contour], -1, (0, 255, 0), 3)
+                    cv2.circle(frame, (cX, cY), 7, (255, 255, 255), -1)
+                    cv2.putText(frame, "center", (cX - 20, cY - 20),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
 
         if debug:
             cv2.imshow("Blue", median)
@@ -101,12 +90,6 @@ def detector(fps_limit=15, width=640, height=480, debug=False):
         key = cv2.waitKey(1)
         if key == 27:  # Escape key
             break
-
-        time.sleep(0.1)
-
-    cap.release()
-    if debug:
-        cv2.destroyAllWindows()
 
 def distance():
     """Calculate and return the distance to the nearest object using ultrasonic sensor.
@@ -277,8 +260,8 @@ def cycle():
     align()
 
     # Finally, stop the motor
-    stop_motor(pi)
     print("Cycle complete: Aligned with the target.")
+    time.sleep(20)
 
 def menu():
     """Provide an interactive menu to control the start and reset of the operation cycle."""
@@ -287,7 +270,7 @@ def menu():
         start.wait_for_press()
         start.wait_for_release()
 
-        time.sleep(3)
+        time.sleep(2)
 
         cycle()
 
