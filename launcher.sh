@@ -4,10 +4,7 @@
 
 cd /
 cd ~
-cd master/pigpio
 sudo pigpiod
-cd ~
-cd IMechE-DS-Code/
+cd /home/pi/IMechE-DS-Code/
 sudo python firmware.py
-sudo python bbt.py
 cd /
