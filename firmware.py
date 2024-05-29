@@ -166,7 +166,7 @@ def align():
     """Adjust the motor to align the system based on the detected target offsets."""
     start=time.time()
     consecutive_aligned = 0
-    while consecutive_aligned < REQ_CONSEC:
+    while consecutive_aligned <= REQ_CONSEC:
         if not target_offset_queue.empty():
             offset = target_offset_queue.get()
             #print(offset)
@@ -182,6 +182,7 @@ def align():
                 consecutive_aligned = 0  # Reset if not aligned
 
             if (time.time()-start >= 10):
+                consecutive_aligned=6
                 break
 
             # Determine direction based on the sign of the offset
@@ -242,7 +243,7 @@ def cycle():
     print("camera aligned with target")
 
     # Align with datum
-    move_motor(10, 200, 100, 0, DATUM_OFFSET/200)
+    move_motor(10, 200, 100, 0, DATUM_OFFSET / 200)
     
     pi.write(STEP_PIN, 0)
     print("aligned")
