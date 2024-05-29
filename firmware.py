@@ -240,14 +240,17 @@ def cycle():
 
     # Return to the origin (for simplicity, assume this is reverse of travel_distance)
     move_motor(start_frequency=100, final_frequency=1000, steps=50, dir=1, run_time=(end_time - start_time))
+    print("moving back")
     
     while True:
         if not target_offset_queue.empty():
             move_motor(start_frequency=1000, final_frequency=300, steps=100, dir=0, run_time=None)
             break
+    print("found target")
 
     # Align with the origin / target
     align()
+    print("aligned")
 
     # Wait for the specified stop time
     time.sleep(PHASE_1_STOP_TIME)
