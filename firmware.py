@@ -19,7 +19,7 @@ ECHO_PIN = 17
 SAFE_DIST = 300  # Safe distance threshold from wall in millimeters
 REQ_CONSEC = 5  # Required consecutive readings for alignment
 X_OFFSET_CONV_FACTOR = 0.15  # Conversion factor for x offset
-DATUM_OFFSET = 1600  # Steps to align with datum
+DATUM_OFFSET = 2100  # Steps to align with datum
 CAMERA_ORGIN_OFFSET = 0
 
 # Specification for stopping time at the end of phase one
