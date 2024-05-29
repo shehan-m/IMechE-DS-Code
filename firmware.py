@@ -92,7 +92,7 @@ def detector(fps_limit=15, width=640, height=480, debug=False):
         else:
             # Clear the queue if no contours are found
             while not target_offset_queue.empty():
-                target_offset_queue.queue.clear()
+                target_offset_queue.get()
 
         if debug:
             cv2.imshow("Blue", median)
@@ -101,6 +101,8 @@ def detector(fps_limit=15, width=640, height=480, debug=False):
         key = cv2.waitKey(1)
         if key == 27:  # Escape key
             break
+
+        time.sleep(0.1)
 
     cap.release()
     if debug:
@@ -230,16 +232,18 @@ def cycle():
             # Slow down as it gets close to the barrier
             move_motor(start_frequency=1000, final_frequency=300, steps=100, dir=0, run_time=None)
             end_time = time.time()
-        
-        if end_time == None:
-            end_time = time.time()
+            break
 
+        time.sleep(0.1)  # Short delay to reduce sensor noise and CPU load
+    
+    while True:
         if limit_switch.is_pressed:
             # Stop the motor when the switch is pressed
             stop_motor()
             break  # Exit the loop once the limit switch is pressed
 
-        time.sleep(0.1)  # Short delay to reduce sensor noise and CPU load
+        time.sleep(0.1) # Short delay to reduce sensor noise and CPU load
+
 
     # Return to the origin (for simplicity, assume this is reverse of travel_distance)
     move_motor(start_frequency=100, final_frequency=1000, steps=50, dir=1, run_time=(end_time - start_time))
