@@ -7,7 +7,7 @@ import queue
 import threading
 
 # Define GPIO pins used for motor control and sensor inputs
-STEP_PIN = 21
+STEP_PIN = 21 # Use hardware PWM GPIO pin (12 or 13)
 DIR_PIN = 20
 SWITCH_PIN = 16
 START_PIN = 23
